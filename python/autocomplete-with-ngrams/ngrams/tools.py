@@ -7,8 +7,8 @@ language model for autocompletion.
 import collections
 import functools
 import itertools
-import typing
 import re
+import typing
 
 import more_itertools
 import nltk
@@ -25,7 +25,7 @@ sentences = list[sentence]
 
 # A sentinel for default arguments different than None. This
 # is for internal usage only
-__SENTINEL = object()
+SENTINEL = object()
 
 UNKNOWN_TOKEN = '<unk>'
 START_TOKEN = '<s>'
@@ -49,13 +49,13 @@ def logcall(func):
     return wrapper
 
 
-def find_if(predicate, iterable, default=__SENTINEL, /):
+def find_if(predicate, iterable, default=SENTINEL, /):
     """Return the first item where `predicate(item)` is True
 
     Example: find the first tokenized sentence that has a '<unk>' token
         find_if(lambda s: '<unk>' in s, tokenized_sentences)
     """
-    if default is __SENTINEL:
+    if default is SENTINEL:
         return more_itertools.first(filter(predicate, iterable))
     else:
         return more_itertools.first(filter(predicate, iterable), default)
@@ -126,11 +126,11 @@ def replace_oov_tokens(tokenized_sents: list[sentence],
         A list of tokenized sentences with OOV tokens replaced by
         `unknown_token`.
     """
-    def __replace(sent):
+    def replace(sent):
         """Helper to replace OOV tokens from a single sentence"""
         return [t if t in closed_vocab else unknown_token for t in sent]
 
-    return [__replace(sent) for sent in tqdm.tqdm(tokenized_sents, ascii=True)]
+    return [replace(sent) for sent in tqdm.tqdm(tokenized_sents, ascii=True)]
 
 
 def preprocess_data(train_tokenized_sentences: list[str],
@@ -310,7 +310,7 @@ def estimate_probabilities(prefix: list[token],
     return collections.Counter(probs)
 
 
-def __get_count_dframe(sequence_counts: collections.Counter,
+def get_count_dframe(sequence_counts: collections.Counter,
                        vocabulary: set[token],
                        end_token: str = END_TOKEN,
                        unknown_token: str = UNKNOWN_TOKEN
@@ -397,12 +397,12 @@ def get_probability_dframe(sequence_counts: collections.Counter,
         representing the final word in the sequence and the rows indexing
         the prefix tuple.
     """
-    countdf = __get_count_dframe(sequence_counts, vocabulary)
+    countdf = get_count_dframe(sequence_counts, vocabulary)
     countdf += k
     return countdf.div(countdf.sum(axis=1), axis=0)
 
 
-def __ngram_size(prefix_counts: collections.Counter) -> int:
+def get_prefix_size(prefix_counts: collections.Counter) -> int:
     """Calculate the size of the n-grams from a prefix counter
 
     The structure of an n-gram is composed of two parts, a prefix and a word,
@@ -463,7 +463,7 @@ def calculate_perplexity(tokenized_sentence: sentence,
         The perplexity metric of an n-gram language model.
     """
     # the size of the prefix, i.e., the size of the n-gram minus the last word
-    n = __ngram_size(prefix_counts)
+    n = get_prefix_size(prefix_counts)
     sentence = tuple([start_token] * n + tokenized_sentence + [end_token])
 
     # Note from the book about N:
@@ -534,10 +534,10 @@ def suggest_word(tokenized_sentence: list[token],
         A pair with the token with the highest probability to immediately
         succeed the tokenized sentence.
     """
-    prefix = lastn(tokenized_sentence, __ngram_size(prefix_counts))
-    probabilities = estimate_probabilities(
-        prefix, sequence_counts, prefix_counts, vocabulary,
-        end_token=end_token, k=k)
+    prefix = lastn(tokenized_sentence, get_prefix_size(prefix_counts))
+    probabilities = estimate_probabilities(prefix, sequence_counts,
+                                           prefix_counts, vocabulary,
+                                           end_token=end_token, k=k)
 
     suggestion_token = ''
     suggestion_prob = float('-inf')     # To guarantee at least one update
