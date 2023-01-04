@@ -1,7 +1,8 @@
 #!/usr/bin/env pyhon3
 """Everything and the kitchen sink
 
-All the tools needed to implement an N-Gram language model for autocompletion.
+All the tools needed to implement a simple word-based N-gram
+language model for autocompletion.
 """
 import collections
 import functools
@@ -22,8 +23,8 @@ sentence = list[token]
 sentences = list[sentence]
 
 
-# A sentinel for default arguments different than None. This is for internal
-# usage only
+# A sentinel for default arguments different than None. This
+# is for internal usage only
 __SENTINEL = object()
 
 UNKNOWN_TOKEN = '<unk>'

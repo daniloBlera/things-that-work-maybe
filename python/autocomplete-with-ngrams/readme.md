@@ -32,8 +32,9 @@ python autocomplete.py --resources nltk-resources en_US.twitter.txt
 
 ## Extra info
 
-The script written with Python 3.11.0 and whatever up-to-date versions of the
-required modules at the time.
+This script was written with Python 3.11.0 and whatever up-to-date
+versions of the required modules at the time of writing in an arch linux
+environment with kernel `6.1.2-arch1-1`.
 
 [c2]: https://www.coursera.org/learn/probabilistic-models-in-nlp?specialization=natural-language-processing
 [book]: https://web.stanford.edu/~jurafsky/slp3/
