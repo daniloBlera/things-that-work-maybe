@@ -5,3 +5,4 @@ __pycache__/
 .spyderproject
 .spyproject
 .mypy_cache/
+nltk-resources/
