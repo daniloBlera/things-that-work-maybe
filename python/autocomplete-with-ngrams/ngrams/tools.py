@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env pyhon3
 """Everything and the kitchen sink
 
 All the tools needed to implement an N-Gram language model for autocompletion.
@@ -19,6 +19,7 @@ import tqdm
 # Type aliases
 token = str
 sentence = list[token]
+sentences = list[sentence]
 
 
 # A sentinel for default arguments different than None. This is for internal
@@ -87,7 +88,7 @@ def count_tokens(tokenized_sentences: list[sentence],
             a list of tokenized sentences.
 
         count_threshold: int
-            ignore words with counts less than this threshold.
+            Ignore tokens with counts less than this threshold.
 
     Return: collections.Counter[token, int]
         A counter instance with the tokens and their respective absolute
@@ -117,7 +118,7 @@ def replace_oov_tokens(tokenized_sents: list[sentence],
             A counter with a corpus vocabulary and their respective absolute
             frequencies.
 
-        unknown_token: str = UNKNOWN_TOKEN
+        unknown_token: str
             The marker to substitute tokens missing from `closed_vocab`.
 
     Return: list[sentence]
@@ -131,17 +132,37 @@ def replace_oov_tokens(tokenized_sents: list[sentence],
     return [__replace(sent) for sent in tqdm.tqdm(tokenized_sents, ascii=True)]
 
 
-# TODO: docstring
 def preprocess_data(train_tokenized_sentences: list[str],
                     test_tokenized_sentences: list[str],
                     count_threshold: int,
                     unknown_token: str = UNKNOWN_TOKEN,
                     token_counter: typing.Callable = count_tokens,
                     oov_token_replacer: typing.Callable = replace_oov_tokens
-                    ) -> tuple[list[sentence],
-                               list[sentence],
-                               collections.Counter]:
-    """DOCSTRING"""
+                    ) -> tuple[sentences, sentences, collections.Counter]:
+    """Replace out-of-vocabulary tokens from training and test data.
+
+    This function does two things:
+        1. Builds a vocabulary from the training data
+        2. Replace tokens from both datasets missing from the training
+        vocabulary with a unknown token marker (non-destructively);
+
+    Arguments:
+        train_tokenized_sentences: list[str]
+            A list of tokenized sentences for training.
+
+        test_tokenized_sentences: list[str]
+            A list of tokenized sentences for testing.
+
+        count_threshold: int
+            Ignore tokens with counts less than this threshold.
+
+        unknown_token: str
+            The marker to substitute tokens missing from the vocabulary.
+
+    Return: tuple[sentences, sentences, collections.Counter]
+        The triple composed of the training sentences, test sentences and
+        vocabulary of the training data.
+    """
     vocabulary = token_counter(train_tokenized_sentences, count_threshold)
     print('* Replacing OOV tokens from training set...')
     oov_train_sentences = oov_token_replacer(
@@ -171,10 +192,10 @@ def count_ngrams(tokenized_sentences: list[sentence], n: int,
         n: int
             The size of the n-gram
 
-        start_token: int = START_TOKEN
+        start_token: int
             The marker used to indicate the start of a sentence.
 
-        end_token: str = END_TOKEN
+        end_token: str
             The marker used to indicate the end of a sentence.
 
     Return: collections.Counter[token, int]
@@ -183,6 +204,8 @@ def count_ngrams(tokenized_sentences: list[sentence], n: int,
     """
     ngrams: dict[str, int] = {}
     for sent in tokenized_sentences:
+        # Note: the books use (n-1) * <s> but the assignment
+        # uses n * <s>
         sent = [start_token] * n + sent + [end_token]
         for ngram in nltk.ngrams(sent, n):
             ngrams[ngram] = ngrams.get(ngram, 0) + 1
@@ -254,15 +277,16 @@ def estimate_probabilities(prefix: list[token],
             The counts of all prefixes (n-grams minus the last token).
 
         vocabulary: list[token]
-            The corpus' vocabulary.
+            The list of unique words from the training corpus that pass the
+            threshold parameter.
 
         end_token: str = Token.Start
             The marker used to indicate the end of a sentence.
 
-        unknown_token: str = UNKNOWN_TOKEN
+        unknown_token: str
             The marker to substitute tokens missing from the vocabulary.
 
-        k: float = SMOOTHING_CONST
+        k: float
             The smoothing constant.
 
     Return: collections.Counter[token, float]
@@ -285,15 +309,45 @@ def estimate_probabilities(prefix: list[token],
     return collections.Counter(probs)
 
 
-# TODO: docstring
 def __get_count_dframe(sequence_counts: collections.Counter,
                        vocabulary: set[token],
                        end_token: str = END_TOKEN,
                        unknown_token: str = UNKNOWN_TOKEN
                        ) -> pandas.DataFrame:
-    """DOCSTRING"""
+    """Build an absolute frequency matrix for the n-gram model.
+
+    Given a count of sequences (complete n-grams including both prefix and
+    last word), return an absolute frequency matrix where the columns indicate
+    the last word and rows are indexed by the prefixes. i.e., the counts for
+    the trigram
+
+        C('cats' | 'she', 'likes')
+
+    can be retrieved by
+
+        counts_df['cats', ('she', 'likes')]
+
+    the general, where
+
+        prefix := (w_{i-n+1}, ..., w_{i-1}) and
+          word := w_i
+
+    we have
+
+        C(w_i | (w_{i-n+1} ... w_{i-1})) <- counts_df[word, tuple(prefix)]
+
+    Arguments:
+        sequence_counts: collections.Counter
+        vocabulary: set[token]
+        k: float
+
+    Return: pandas.DataFrame
+        An absolute frequency matrix for the n-gram model, with columns
+        representing the final word in the sequence and the rows indexing
+        the prefix tuple.
+    """
     last_words = list(vocabulary) + [unknown_token, end_token]
-    prefixes = {tuple(prefix) for (*prefix, word) in sequence_counts.keys()}
+    prefixes = {tuple(prefix) for (*prefix, _) in sequence_counts.keys()}
     nrows = len(prefixes)
     ncols = len(last_words)
 
@@ -307,11 +361,41 @@ def __get_count_dframe(sequence_counts: collections.Counter,
     return countdf
 
 
-# TODO: docstring
 def get_probability_dframe(sequence_counts: collections.Counter,
                            vocabulary: set[token],
-                           k: float) -> pandas.DataFrame:
-    """DOCSTRING"""
+                           k: float = SMOOTHING_CONST) -> pandas.DataFrame:
+    """Build a joint probability matrix for the n-gram model.
+
+    Given a count of sequences (complete n-grams including both prefix and
+    last word), return a joint probability matrix where the columns indicate
+    the last word and rows are indexed by the prefixes. i.e., the joint
+    probability for the trigram
+
+        P('cats' | 'she', 'likes')
+
+    can be retrieved by
+
+        probs_df['cats', ('she', 'likes')]
+
+    the general, where
+
+        prefix := (w_{i-n+1}, ..., w_{i-1}) and
+          word := w_i
+
+    we have
+
+        P(w_i | (w_{i-n+1} ... w_{i-1})) <- probs_df[word, tuple(prefix)]
+
+    Arguments:
+        sequence_counts: collections.Counter
+        vocabulary: set[token]
+        k: float
+
+    Return: pandas.DataFrame
+        A joint probability matrix for the n-gram model, with columns
+        representing the final word in the sequence and the rows indexing
+        the prefix tuple.
+    """
     countdf = __get_count_dframe(sequence_counts, vocabulary)
     countdf += k
     return countdf.div(countdf.sum(axis=1), axis=0)
@@ -338,7 +422,6 @@ def __ngram_size(prefix_counts: collections.Counter) -> int:
     return len(prefix)
 
 
-# TODO: docstring
 def calculate_perplexity(tokenized_sentence: sentence,
                          sequence_counts: collections.Counter,
                          prefix_counts: collections.Counter,
@@ -347,7 +430,7 @@ def calculate_perplexity(tokenized_sentence: sentence,
                          end_token: str = END_TOKEN,
                          k: float = SMOOTHING_CONST,
                          log_perplexity: bool = False) -> float:
-    """DOCSTRING
+    """Calculate the perplexity of a language model for a given sentence
 
     Arguments:
         tokenized_sentence: list[token]
@@ -362,18 +445,21 @@ def calculate_perplexity(tokenized_sentence: sentence,
         vocab_size: int
             The number of unique tokens in the corpus' vocabulary.
 
-        start_token: int = START_TOKEN
+        start_token: int
             The marker used to indicate the start of a sentence.
 
-        end_token: str = END_TOKEN
+        end_token: str
             The marker used to indicate the end of a sentence.
 
-        k: float = SMOOTHING_CONST
+        k: float
             The smoothing constant.
 
         log_perplexity: bool = False
             Transform the product of probabilities into a sum of log
             probabilities from base 2.
+
+    Return: float
+        The perplexity metric of an n-gram language model.
     """
     # the size of the prefix, i.e., the size of the n-gram minus the last word
     n = __ngram_size(prefix_counts)
@@ -410,17 +496,15 @@ def calculate_perplexity(tokenized_sentence: sentence,
         return -(1/N) * summation
 
 
-# TODO: docstring
 def suggest_word(tokenized_sentence: list[token],
                  sequence_counts: collections.Counter,
                  prefix_counts: collections.Counter,
                  vocabulary: list[token],
-                 start_token: str = START_TOKEN,
                  end_token: str = END_TOKEN,
                  k: float = SMOOTHING_CONST,
                  start_with: str | None = None
                  ) -> tuple[token, float]:
-    """DOCSTRING
+    """Predict the next token given a sequence of previous ones.
 
     Arguments:
         tokenized_sentence: list[token]
@@ -436,10 +520,7 @@ def suggest_word(tokenized_sentence: list[token],
         vocab_size: int
             The number of unique tokens in the corpus' vocabulary.
 
-        start_token: int = START_TOKEN
-            The marker used to indicate the start of a sentence.
-
-        end_token: str = END_TOKEN
+        end_token: str
             The marker used to indicate the end of a sentence.
 
         k: float = SMOOTHING_CONST
@@ -470,14 +551,54 @@ def suggest_word(tokenized_sentence: list[token],
     return (suggestion_token, suggestion_prob)
 
 
-# TODO: docstring
 def get_suggestions(previous_tokens: list[token],
                     ngram_counts_list: list[collections.Counter],
                     vocabulary: list[token],
                     k: float = SMOOTHING_CONST,
                     start_with: str | None = None
                     ) -> list[tuple[token, float]]:
-    """DOCSTRING"""
+    """Return a list of token predictions given a sequence of previous ones.
+
+    Given a list of different n-grams, return a list of (token, probability)
+    pairs. The number of predictions varies based on the number of n-grams
+    with the following relation
+
+        len(predictions) == len(ngram_counts_list) - 1
+
+    For example, given a list of n-grams of sizes 1, 2, 3, 4 and 5, return a
+    list of 4 predictions with the n-grams aligned in a paiwise fashion, i.e.,
+
+        prefix     sequence
+         count     count
+        1-gram and 2-gram
+        2-gram and 3-gram
+        3-gram and 4-gram
+        4-gram and 5-gram
+
+    since we're adopting the notion that for any given N-gram, its `prefix`
+    part will have a length of N-1 elements.
+
+    Arguments:
+        previous_tokens: list[token]
+            A list of seen tokens. It must have at least N tokens, where N is
+            the size of the N-gram.
+
+        ngram_counts_list: list[collections.Counter]
+            A list of n-grams of different sizes.
+
+        vocabulary: list[token]
+            The list of unique words from the training corpus that pass the
+            threshold parameter.
+
+        k: float = SMOOTHING_CONST
+            The smoothing constant.
+
+        start_with: str | None = None
+            How the suggested word should start.
+
+    Return: list[tuple[token, float]]
+        A list of (token, probability) pairs prediction in descending order.
+    """
     suggestions = []
     for (prefix_counts, sequence_counts) in itertools.pairwise(
             ngram_counts_list):

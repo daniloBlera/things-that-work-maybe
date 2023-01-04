@@ -57,7 +57,7 @@ def print_suggestions(previous_tokens: list[str],
                       ngram_counts_list: list[Counter],
                       vocab_words: list[str],
                       start_with: str | None = None,
-                      k: float = 1):
+                      k: float = 1.0):
     """Print autocomplete suggestions alog with their probabilities."""
     suggestions = ng.get_suggestions(previous_tokens, ngram_counts_list,
                                      vocab_words, k=k, start_with=start_with)
