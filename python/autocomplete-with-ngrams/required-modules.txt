@@ -1,0 +1,5 @@
+more-itertools
+nltk
+pandas
+scikit-learn
+tqdm
