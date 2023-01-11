@@ -2,15 +2,17 @@
 from functools import reduce
 
 
+# Everything in a single beautifully unreadable code
 def partition(predicate, iterable):
-    """Everything in a single beautifully unreadable code"""
+    """Partition the iterable according to the predicate"""
     return reduce(lambda acc, x: acc[not predicate(x)].append(x) or acc,
                   iterable,
                   ([], []))
 
 
+# An uglier but more readable version of the same above
 def partitionv2(predicate, iterable):
-    """An uglier but more readable version of the same above"""
+    """Partition the iterable according to the predicate"""
     def accumulate(acc, x):
         if predicate(x):
             acc[0].append(x)

@@ -19,5 +19,9 @@ The rest of the symbols and kludges found in this module are for
 internal usage mostly because avoiding namespace taxonomies in general
 is a good thing.
 """
-from ngrams.tools import get_tokenized_sentences_from, preprocess_data, \
-    count_ngrams, get_suggestions
+from ngrams.tools import (
+        get_tokenized_sentences_from,
+        preprocess_data,
+        count_ngrams,
+        get_suggestions
+)
