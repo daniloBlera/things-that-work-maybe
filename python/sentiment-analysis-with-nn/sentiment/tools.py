@@ -2,19 +2,20 @@
 """An example of sentiment analysis with a two-layer neural network"""
 # TODO: refactor functions into more consistent parameter order (e.g.:
 # positive data, negative data, batch size, token-idx map, cycle, shuffle)
-import re
+import os
 import random
+import re
 import string
 import typing
 
+import jax
+import jax.numpy as np
 import more_itertools as mit
 import nltk
+import tqdm
 import trax
 import trax.layers as tl
-import jax.numpy as np
-import jax
-import tqdm
-
+import trax.supervised.training as tt
 
 NLTK_DIR = 'nltk-resources'
 nltk.data.path.insert(0, NLTK_DIR)
@@ -30,9 +31,8 @@ download_package('punkt')
 download_package('stopwords')
 
 
-TOKENIZER = nltk.tokenize.TweetTokenizer(preserve_case=False,
-                                         strip_handles=True,
-                                         reduce_len=True)
+TOKENIZER = nltk.tokenize.TweetTokenizer(
+        preserve_case=False, strip_handles=True, reduce_len=True)
 STEMMER = nltk.stem.PorterStemmer()
 STOPWORDS = nltk.corpus.stopwords.words('english')
 
@@ -66,10 +66,8 @@ def find_if(predicate, iterable, default=__DEFAULT_ARG, /):
     Arguments:
         predicate:
             A function of one argument that returns a generalized boolean.
-
         iterable:
             An iterable of things.
-
         default:
             If unset, this function will raise a ValueError if no element
             from `iterable` passes the `predicate`. Otherwise, return the
@@ -145,9 +143,7 @@ def get_token_index_maps(vocab: set[str],
     return (token2idx, idx2token)
 
 
-def tweet_to_tensor(tweet: str,
-                    token2idx: dict[str, int]
-                    ) -> list[int]:
+def tweet_to_tensor(tweet: str, token2idx: dict[str, int]) -> list[int]:
     """Return the list of token indexes from a tweet text
 
     Tokenize a tweet text and return the indexes mapped to each token,
@@ -156,7 +152,6 @@ def tweet_to_tensor(tweet: str,
     Arguments:
         tweet: str
             A tweet in text form.
-
         token2idx: dict[str, int]
             A token to index mapping.
 
@@ -176,7 +171,6 @@ def tensor_to_tokens(tensor: list[int] | jax.Array,
     Arguments:
         tensor: list[int] | jax.Array
             A list/array of token indexes.
-
         idx2token: dict[int, str]
             An index to token mapping.
 
@@ -199,6 +193,7 @@ def pad_right(iterable: list[T], length: int, pad_element: T) -> list[T]:
         return iterable
 
 
+# TODO: Move some of this docs to the more specific below
 def batch_generator(data_pos: list[str],
                     data_neg: list[str],
                     batch_size: int,
@@ -207,11 +202,9 @@ def batch_generator(data_pos: list[str],
                     shuffle: bool = True,
                     padding_token: str = PADDING_TOKEN
                     ) -> typing.Generator[
-                        tuple[jax.Array,
-                              jax.Array,
-                              jax.Array],
-                        None,
-                        None]:
+                            tuple[jax.Array, jax.Array, jax.Array],
+                            None,
+                            None]:
     """The generic batch generator function used for training and testing.
 
     Yield (index-encoded) inputs, labels and sample weights batches with equal
@@ -220,26 +213,19 @@ def batch_generator(data_pos: list[str],
     Arguments:
         data_pos: list[str]
             The list of all positive samples.
-
         data_neg: list[str]
             The list of all negative samples.
-
         batch_size: int
             The size each batch should have. Incomplete batches are ignored.
-
         token2idx: dict[str, int]
             A token to index mapping.
-
         cycle: bool, optional
             If the dataset should be used in cycles. The default is True.
-
         shuffle: bool, optional
             If the dataset should be shuffled at the beginning of every
             epoch/cycle. The default is False.
 
-    Return: tuple[jax.Array,
-                  jax.Array,
-                  jax.Array]
+    Yield: tuple[jax.Array, jax.Array, jax.Array]
         Batches of (index-encoded) inputs, labels and sample weights in a
         three-items tuple (also known as a "triple"). Each of the arrays have
         the following shapes:
@@ -249,7 +235,7 @@ def batch_generator(data_pos: list[str],
             sample_weights.shape => (batch_size,)
 
         where `maxlen` is the length of the longest tokenized tweet in the
-        batch, which means, the batches will have variable length tweets.
+        batch, i.e., the batches will have variable length tweets.
     """
     assert len(data_pos) == len(data_neg), f'''Error: the size of the \
 positive and negative data differ \
@@ -302,7 +288,7 @@ def train_batch_generator(data_pos: list[str],
                           shuffle: bool = True) -> typing.Generator:
     """The training batch generator function for the training procedure"""
     return batch_generator(
-        data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
+            data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
 
 
 def val_batch_generator(data_pos: list[str],
@@ -327,15 +313,14 @@ def test_batch_generator(data_pos: list[str],
         data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
 
 
-def create_classifier(vocab_size: int = 9088,
+def create_classifier(vocab_size: int,
                       embedding_dim: int = 256,
                       output_dim: int = 2) -> tl.Serial:
     """Return a sentiment classifier model
 
     Arguments:
         vocab_size: int, optional
-            The size of the vocabulary used, including the special tokens. The
-            default is 9088.
+            The size of the vocabulary used, including the special tokens.
         embedding_dim: int, optional
             The size of the word embedding dimension. The default is 256.
         output_dim: int, optional
@@ -359,33 +344,36 @@ def get_train_task(positive_samples: list[str],
                    token2idx: dict[str, int],
                    cycle: bool = True,
                    batch_size: int = 16
-                   ) -> trax.supervised.training.TrainTask:
+                   ) -> tt.TrainTask:
     """Create a training task
 
     Arguments:
         positive_samples: list[str]
             The list of all (training) positive samples.
-
         negative_samples: list[str]
             The list of all (training) positive samples.
-
         token2idx: dict[str, int]
             A token to index mapping.
-
         cycle: bool, optional
             If the dataset should be used in cycles. The default is True.
-
         batch_size: int
             The size each batch should have. Incomplete batches are ignored.
 
     Returns: trax.supervised.training.TrainTask
         A trax training task.
     """
-    task = trax.supervised.training.TrainTask(
-        labeled_data=train_batch_generator(positive_samples, negative_samples,
-                                           batch_size, token2idx, cycle,
-                                           shuffle=True),
-        loss_layer=trax.layers.WeightedCategoryCrossEntropy(),
+    data_generator = train_batch_generator(
+        positive_samples,
+        negative_samples,
+        batch_size,
+        token2idx,
+        cycle,
+        shuffle=True
+    )
+
+    task = tt.TrainTask(
+        labeled_data=data_generator,
+        loss_layer=tl.WeightedCategoryCrossEntropy(),
         optimizer=trax.optimizers.Adam(0.01),
         n_steps_per_checkpoint=10
     )
@@ -397,107 +385,117 @@ def get_eval_task(positive_samples: list[str],
                   negative_samples: list[str],
                   token2idx: dict[str, int],
                   cycle: bool = True,
-                  batch_size: int = 16):
+                  batch_size: int = 16
+                  ) -> tt.EvalTask:
     """Create a training validation task
 
     Arguments:
         positive_samples: list[str]
             The list of all (validation) positive samples.
-
         negative_samples: list[str]
             The list of all (validation) positive samples.
-
         token2idx: dict[str, int]
             A token to index mapping.
-
         cycle: bool, optional
             If the dataset should be used in cycles. The default is True.
-
         batch_size: int
             The size each batch should have. Incomplete batches are ignored.
 
     Returns: trax.supervised.training.EvalTask
         A trax training validation task.
     """
-    task = trax.supervised.training.EvalTask(
-        labeled_data=val_batch_generator(positive_samples, negative_samples,
-                                         batch_size, token2idx, cycle=cycle,
-                                         shuffle=True),
-        metrics=[trax.layers.WeightedCategoryCrossEntropy(),
-                 trax.layers.WeightedCategoryAccuracy()]
+    data_generator = val_batch_generator(
+        positive_samples,
+        negative_samples,
+        batch_size,
+        token2idx,
+        cycle=cycle,
+        shuffle=True
     )
 
+    metrics = [
+        tl.WeightedCategoryCrossEntropy(),
+        tl.WeightedCategoryAccuracy()
+    ]
+
+    task = tt.EvalTask(labeled_data=data_generator, metrics=metrics)
     return task
 
 
 def get_test_task(positive_samples: list[str],
                   negative_samples: list[str],
                   token2idx: dict[str, int],
-                  batch_size: int = 16):
+                  batch_size: int = 16
+                  ) -> tt.EvalTask:
     """Create a test evaluation task
 
     Arguments:
         positive_samples: list[str]
             The list of all (testing) positive samples.
-
         negative_samples: list[str]
             The list of all (testing) positive samples.
-
         token2idx: dict[str, int]
             A token to index mapping.
-
         batch_size: int
             The size each batch should have. Incomplete batches are ignored.
 
     Returns: trax.supervised.training.EvalTask
         A trax test evaluation task for a trained model.
     """
-    task = trax.supervised.training.EvalTask(
-        labeled_data=test_batch_generator(positive_samples, negative_samples,
-                                          batch_size, token2idx, cycle=False,
-                                          shuffle=True),
-        metrics=[trax.layers.WeightedCategoryCrossEntropy(),
-                 trax.layers.WeightedCategoryAccuracy()]
+    data_generator = test_batch_generator(
+        positive_samples,
+        negative_samples,
+        batch_size,
+        token2idx,
+        cycle=False,
+        shuffle=True
     )
 
+    metrics = [
+        tl.WeightedCategoryCrossEntropy(),
+        tl.WeightedCategoryAccuracy()
+    ]
+
+    task = tt.EvalTask(labeled_data=data_generator, metrics=metrics)
     return task
 
 
-def train_model(classifier: trax.layers.Serial,
-                train_task: trax.supervised.training.TrainTask,
-                eval_task: trax.supervised.training.EvalTask,
-                n_steps: int,
-                output_dir: str = './model'
-                ) -> trax.supervised.training.Loop:
+def train_model(classifier: tl.Serial,
+                train_task: tt.TrainTask,
+                eval_task: tt.EvalTask,
+                max_steps: int,
+                output_dir: str = './model-checkpoints'
+                ) -> tt.Loop:
     """Run and return a training loop
 
     Arguments
         classifier: trax.layers.Serial
             The model to be trained.
-
         train_task: trax.supervised.training.TrainTask
             The training procedure.
-
         eval_task: trax.supervised.training.EvalTask
             The training validation procedure.
-
-        n_steps: int
+        max_steps: int
             Stop training after `n_steps`.
-
         output_dir: str, optional
-            Where to save the training checkpoints. The default is './model'.
+            Where to save the training checkpoints. The default is
+            './model-checkpoints'.
 
     Returns: trax.supervised.training.Loop
         The training loop object itself for inspection.
     """
-    training_loop = trax.supervised.training.Loop(
-        classifier, train_task, eval_tasks=eval_task, output_dir=output_dir)
+    training_loop = tt.Loop(
+        classifier,
+        train_task,
+        eval_tasks=eval_task,
+        output_dir=output_dir
+    )
 
-    training_loop.run(n_steps=n_steps)
+    training_loop.run(n_steps=max_steps)
     return training_loop
 
 
-# TODO: give more descriptive symbol names
+# TODO: make the symbol naming more consistent with the logic
 def compute_accuracy(predictions: jax.Array,
                      labels: jax.Array,
                      sample_weights: jax.Array
@@ -507,10 +505,8 @@ def compute_accuracy(predictions: jax.Array,
     Parameters
         predictions: jax.Array
             The predictions array with shape (batch_size, output_dim).
-
         labels: jax.Array
             The true labels array with shape (batch_size,).
-
         sample_weights: jax.Array
             The sample weights array, with shape (batch_size,).
 
@@ -530,7 +526,7 @@ def compute_accuracy(predictions: jax.Array,
 
 
 def test_model(batch_generator: typing.Generator,
-               model: trax.layers.Serial,
+               model: tl.Serial,
                compute_accuracy: typing.Callable = compute_accuracy
                ) -> float:
     """Compute the accuracy of the trained model on the test dataset
@@ -555,9 +551,8 @@ def test_model(batch_generator: typing.Generator,
     # sample_weights => (batch_size,)
     for (inputs, labels, sample_weights) in batch_generator:
         predictions = model(inputs)
-        (_, num_correct, num_samples) = compute_accuracy(predictions,
-                                                         labels,
-                                                         sample_weights)
+        (_, num_correct, num_samples) = compute_accuracy(
+                predictions, labels, sample_weights)
         total_num_correct += num_correct
         total_num_predictions += num_samples
 
@@ -566,19 +561,17 @@ def test_model(batch_generator: typing.Generator,
 
 def predict_sentiment(tweet: str,
                       token2idx: dict[str, int],
-                      model: trax.layers.Serial,
+                      model: tl.Serial,
                       ) -> typing.Literal['positive', 'negative']:
     """Predict the sentiment on a text sentence
-    Parameters
-    ----------
-    tweet : str
-        DESCRIPTION.
-    token2idx : dict[str, int]
-        DESCRIPTION.
-    model : trax.layers.Serial
-        DESCRIPTION.
-    verbose : bool, optional
-        DESCRIPTION. The default is False.
+
+    Arguments:
+        tweet: str
+            A tweet or text sentence.
+        token2idx: dict[str, int]
+            A token to index mapping.
+        model: trax.layers.Serial
+            A trained trax model.
 
     Returns: typing.Literal['positive', 'negative']
         Return the predicted sentiment of the text.

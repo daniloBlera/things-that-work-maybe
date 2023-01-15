@@ -15,7 +15,9 @@ Install the required dependencies (preferably in a
 pip install more-itertools nltk scikit-learn tqdm trax
 ```
 
-then, run the script with
+then, run the script with (be warned that it takes a few
+seconds for the required modules to load, before you start
+thinking that the script is frozen):
 
 ```zsh
 python classify.py

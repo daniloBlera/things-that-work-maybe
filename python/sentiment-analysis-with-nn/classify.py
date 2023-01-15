@@ -63,16 +63,16 @@ if __name__ == '__main__':
     # Evaluate the damn thing with the test dataset
     test_batches = st.test_batch_generator(test_pos, test_neg, 64, token2idx)
     accuracy = st.test_model(test_batches, model)
-    print(f'\n* Test accuracy: {accuracy}')
+    print(f'\n* Accuracy on the test dataset: {accuracy}')
 
     # Predicting with a random positive sample from the test dataset
     tweet = random.choice(test_pos)
-    print(f'* tweet: {repr(tweet)}')
+    print(f'\n* tweet: {repr(tweet)}')
     print(f'* Prediction: {st.predict_sentiment(tweet, token2idx, model)}')
 
     # Predicting with a random negative sample from the test dataset
     tweet = random.choice(test_neg)
-    print(f'* tweet: {repr(tweet)}')
+    print(f'\n* tweet: {repr(tweet)}')
     print(f'* Prediction: {st.predict_sentiment(tweet, token2idx, model)}')
 
     # Trying predicting some sentences
