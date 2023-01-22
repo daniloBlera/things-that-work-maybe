@@ -45,7 +45,7 @@ Otherwise, return NIL.
 Example:
   (file-exists-p \"path/to/file\")          => #P\"truepath/to/file\"
   (file-exists-p \"path/to/file/\")         => NIL
-  (file-exists-p \"path/to/missing-file/\") => NIL"
+  (file-exists-p \"path/to/missing-file\")  => NIL"
   (let ((probe (probe-file spec)))
     (and probe
          (and (pathname-name spec)

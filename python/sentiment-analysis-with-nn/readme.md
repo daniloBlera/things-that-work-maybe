@@ -1,8 +1,8 @@
 # Classifying sentiments from tweets
 
 Implementing a tweet sentiment classifier using a two-layer
-feed-forward network. This impleentation was heavily based
-on the implementation used for the first week of Coursera's
+feed-forward network. This implentation was heavily based on
+the implementation used for the first week of Coursera's
 ["Natural Language Processing with Sequence Models"
 course][c1].
 

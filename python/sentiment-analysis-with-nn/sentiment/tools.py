@@ -2,7 +2,6 @@
 """An example of sentiment analysis with a two-layer neural network"""
 # TODO: refactor functions into more consistent parameter order (e.g.:
 # positive data, negative data, batch size, token-idx map, cycle, shuffle)
-import os
 import random
 import re
 import string
@@ -16,6 +15,7 @@ import tqdm
 import trax
 import trax.layers as tl
 import trax.supervised.training as tt
+
 
 NLTK_DIR = 'nltk-resources'
 nltk.data.path.insert(0, NLTK_DIR)
@@ -40,10 +40,6 @@ STOPWORDS = nltk.corpus.stopwords.words('english')
 UNKNOWN_TOKEN = '__UNK__'
 PADDING_TOKEN = '__PAD__'
 END_OF_TEXT_TOKEN = '__</e>__'
-
-# For typing
-T = typing.TypeVar('T')
-U = typing.TypeVar('U')
 
 # FOR DIAGNOSTICS #############################################################
 # To desambiguate a default argument from a user-provided one
@@ -183,7 +179,7 @@ def tensor_to_tokens(tensor: list[int] | jax.Array,
         return [idx2token[idx] for idx in tensor]
 
 
-def pad_right(iterable: list[T], length: int, pad_element: T) -> list[T]:
+def pad_right(iterable: list[int], length: int, pad_element: int) -> list[int]:
     """Pad iterable if its shorter than `length`"""
     iterlen = len(iterable)
 
