@@ -1,4 +1,4 @@
-# Classifying sentiments from tweets
+# Named Entity Recognition
 
 Implementing a model for the named entity recognition task
 with a LSTM recurrent network. This implementation was based
