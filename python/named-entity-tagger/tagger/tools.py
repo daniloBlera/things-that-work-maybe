@@ -38,6 +38,12 @@ U = TypeVar('U')
 def get_item_idx_maps(
         items_filepath: str
         ) -> tuple[dict[str, int], dict[int, str]]:
+    """Create both item to index and index to item map.
+
+    Given the path to a text file containing unique items, return
+    two dicts, the first with (item, index) pairs and the second
+    with (index, item) pairs.
+    """
     unique_items = Path(items_filepath).read_text().strip().splitlines()
     idx2item = dict(enumerate(unique_items))
     item2idx = {token: idx for (idx, token) in idx2item.items()}
@@ -62,6 +68,23 @@ def get_dataset_tensors(
         token_to_idx: dict[str, int],
         tag_to_idx: dict[str, int]
         ) -> tuple[list[list[int]], list[list[int]]]:
+    """Creat input and label tensors from a input and label text datasets
+
+    Arguments:
+        inputs_filepath: str
+            The path to a text file with sentences separated by newlines.
+        labels_filepath: str
+            The path to a text file with the entity tags of the tokens from
+            the text sentences file.
+        token_to_idx: dict[str, int]
+            A dictionary mapping tokens to their unique integer indexes.
+        tag_to_idx: dict[str, int]
+            A dictionary mapping entity tags to their unique integer indexes.
+
+    Return: tuple[list[list[int]], list[list[int]]]
+        A pair containing all input sentences converted to indexes and all
+        corresponding named entity tags converted to their integer indexes.
+    """
     unk_idx = token_to_idx[UNKNOWN_TOKEN]
     other_tag = tag_to_idx['O']
 
@@ -92,6 +115,24 @@ def batch_generator(
         cycle: bool = True,
         shuffle: bool = True
         ) -> Generator:
+    """A generic batch generator used for training, validation and testing.
+
+    Arguments:
+        inputs: list[list[int]]
+            The (integer-indexed) input samples dataset to be batched
+        labels: list[list[int]]
+            The (integer-indexed) label samples dataset to be batched
+        batch_size: int
+            The size of the batches. Batches with less than `batch_size`
+            elements are ignored.
+        padding_index: int
+            The integer index used to indicate padding of both tokens and
+            named entity tags.
+        cycle: bool = True
+            If the dataset should be reused in cycles.
+        shuffle: bool = True
+            If the dataset should be shuffled at the beginning of every cycle.
+    """
     def rpad(tensor: list[int], length: int) -> list[int]:
         """Pad tensor if it's shorter than `length`"""
         if len(tensor) >= length:
@@ -128,6 +169,20 @@ def create_model(
         embedding_dim: int,
         num_tags: int
         ) -> tl.Serial:
+    """Create a trax model for named entity recognition
+
+    Arguments:
+        vocab_size: int
+            The size of unique words in the embedding layer.
+        embedding_dim: int
+            The size of the word embedding dimension.
+        num_tags: int
+            The number of unique named entity tags/output labels.
+
+    Return: tl.Serial
+        A (untrained) trax LSTM recurrent network model for named entity
+        recognition.
+    """
     model = tl.Serial(
         tl.Embedding(vocab_size=vocab_size, d_feature=embedding_dim),
         tl.LSTM(n_units=embedding_dim),
@@ -149,6 +204,33 @@ def train_model(
         batch_size: int = 64,
         output_dir: str = './model-checkpoints'
         ):
+    """Run the training loop on the model
+
+    Arguments:
+        model: tl.Serial
+            A trax model to be trained.
+        train_inputs: list[list[int]]
+            The training (integer indexed) input samples
+        train_labels: list[list[int]]
+            The training (integer indexed) label samples
+        val_inputs: list[list[int]]
+            The validation input samples
+        val_labels: list[list[int]]
+            The validation label samples
+        max_steps: int
+            The maximum number of training steps to be executed.
+        padding_index: int
+            The index used to indicate input and labels padding
+        batch_size: int = 64
+            The size of the training batches. Preferably, values from
+            powers of two.
+        output_dir: str = './model-checkpoints'
+            The path to the directory for the training checkpoints and
+            trained model.
+
+    Return: tl.Serial
+        The trained model.
+    """
     try:
         shutil.rmtree(output_dir)
     except FileNotFoundError:
@@ -196,6 +278,19 @@ def compute_accuracy(
         labels: jax.Array,
         padding_index: int
         ) -> float:
+    """Compute the classification accuracy for a batch of predictions
+
+    Arguments:
+        predictions: jax.Array
+            A single batch of predictions with shape (batch_size, max_length, num_tags)
+        labels: jax.Array
+            A single batch of true labels with shape (batch_size, max_length)
+        padding_index: int
+            The index used to indicate tokens and labels padding
+
+    Return: float
+        The classification accuracy for the predition batch
+    """
     # argmax'ing the softmax dimension
     # predictions.shape := (batch_size, max_length, num_classes)
     outputs = jnp.argmax(predictions, axis=2)
@@ -210,6 +305,21 @@ def test_model_accuracy(
         padding_index: int,
         model: tl.Serial
         ) -> float:
+    """Compute the trained model's accuracy on the test dataset
+
+    Arguments:
+        test_inputs: list[list[int]]
+            The test (integer-indexed) input samples
+        test_labels: list[list[int]]
+            The test (integer-indexed) label samples
+        padding_index: int
+            The index used to indicate token and label padding
+        model: tl.Serial
+            A trained trax model
+
+    Return: float
+        The model's accuracy on the test dataset
+    """
     # Processing the entire test dataset in a single batch
     batch = batch_generator(
         inputs=test_inputs, labels=test_labels,
@@ -228,6 +338,21 @@ def predict_tags(
         token_to_idx: dict[str, int],
         idx_to_tag: dict[int, str]
         ) -> list[tuple[str, str]]:
+    """Predict the named entity tags for a given text sentence
+
+    Arguments:
+        sentence: str
+            A text sentence.
+        model: tl.Serial
+            The trained trax classifier.
+        token_to_idx: dict[str, int]
+            A dict mapping tokens to integer indexes.
+        idx_to_tag: dict[int, str]
+            A dict mapping integer indexes to named entity tags.
+
+    Return: list[tuple[str, str]]
+        A list of (token, predicted named entity tag)
+    """
     tokens = nltk.word_tokenize(sentence)
     unk_idx = token_to_idx[UNKNOWN_TOKEN]
     input_tensor = [token_to_idx.get(t, unk_idx) for t in tokens]
