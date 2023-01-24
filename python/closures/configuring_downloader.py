@@ -7,6 +7,8 @@ def make_downloader(download_path):
     """Return a download function configured with a download path"""
     def dl_func(package):
         nltk.download(package, download_dir=download_path)
+        if download_path not in nltk.data.path:
+            nltk.data.path.insert(0, download_path)
 
     return dl_func
 

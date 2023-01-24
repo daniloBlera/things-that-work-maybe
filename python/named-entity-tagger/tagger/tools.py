@@ -26,7 +26,7 @@ def download_package(package: str, download_dir: str = NLTK_DIR) -> None:
 download_package('punkt')
 download_package('stopwords')
 
-# Special token markers
+# Special token markers from the vocab file in large/words.txt
 UNKNOWN_TOKEN = 'UNK'
 PADDING_TOKEN = '<pad>'
 
@@ -52,12 +52,26 @@ def get_item_idx_maps(
 
 def create_converter(
         type_map: dict[T, U],
-        default_key: T
+        default: U
         ) -> Callable[[list[T]], list[U]]:
+    """Create a function that converts list[T] into list[U]
+
+    Use this to build a function that converts a list of tokens
+    into a list of indexes and vice-versa
+
+    Arguments:
+        type_map: dict[T, U]
+            A dictionary mapping from `T` to `U`
+        default: U
+            The default value for missing `T`
+
+    Return: Callable[[list[T]], list[U]]
+        A function that converts a list of `T` into a list of `U`.
+    """
     converter_map = type_map.copy()
 
     def convert(items: list[T]) -> list[U]:
-        return [converter_map.get(e, default_key) for e in items]
+        return [converter_map.get(e, default) for e in items]
 
     return convert
 
@@ -183,6 +197,12 @@ def create_model(
         A (untrained) trax LSTM recurrent network model for named entity
         recognition.
     """
+    # The shapes during processing of inputs
+    #                        x => (batch_size, max_len)
+    #     a1 = tl.Embedding(x) => (batch_size, max_len, embedding_dim)
+    #         a2 = tl.LSTM(a1) => (batch_size, max_len, embedding_dim)
+    #        a3 = tl.Dense(a2) => (batch_size, max_len, num_classes)
+    # yhat = tl.LogSoftmax(a3) => (batch_size, max_len, num_classes)
     model = tl.Serial(
         tl.Embedding(vocab_size=vocab_size, d_feature=embedding_dim),
         tl.LSTM(n_units=embedding_dim),
