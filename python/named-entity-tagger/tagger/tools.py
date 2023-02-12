@@ -37,7 +37,7 @@ U = TypeVar('U')
 
 def get_item_idx_maps(
         items_filepath: str
-        ) -> tuple[dict[str, int], dict[int, str]]:
+) -> tuple[dict[str, int], dict[int, str]]:
     """Create both item to index and index to item map.
 
     Given the path to a text file containing unique items, return
@@ -53,7 +53,7 @@ def get_item_idx_maps(
 def create_converter(
         type_map: dict[T, U],
         default: U
-        ) -> Callable[[list[T]], list[U]]:
+) -> Callable[[list[T]], list[U]]:
     """Create a function that converts list[T] into list[U]
 
     Use this to build a function that converts a list of tokens
@@ -81,7 +81,7 @@ def get_dataset_tensors(
         labels_filepath: str,
         token_to_idx: dict[str, int],
         tag_to_idx: dict[str, int]
-        ) -> tuple[list[list[int]], list[list[int]]]:
+) -> tuple[list[list[int]], list[list[int]]]:
     """Creat input and label tensors from a input and label text datasets
 
     Arguments:
@@ -128,7 +128,7 @@ def batch_generator(
         padding_index: int,
         cycle: bool = True,
         shuffle: bool = True
-        ) -> Generator:
+) -> Generator[tuple[jax.Array, jax.Array], None, None]:
     """A generic batch generator used for training, validation and testing.
 
     Arguments:
@@ -146,9 +146,12 @@ def batch_generator(
             If the dataset should be reused in cycles.
         shuffle: bool = True
             If the dataset should be shuffled at the beginning of every cycle.
+
+    Yields: Generator[tuple[jax.array, jax.array], None, None]
+        A pair of input and label batches as jax arrays.
     """
     def rpad(tensor: list[int], length: int) -> list[int]:
-        """Pad tensor if it's shorter than `length`"""
+        """right pad tensor if it's shorter than `length` elements"""
         if len(tensor) >= length:
             return tensor
         pad = [padding_index] * (length - len(tensor))
@@ -182,7 +185,7 @@ def create_model(
         vocab_size: int,
         embedding_dim: int,
         num_tags: int
-        ) -> tl.Serial:
+) -> tl.Serial:
     """Create a trax model for named entity recognition
 
     Arguments:
@@ -223,7 +226,7 @@ def train_model(
         padding_index: int,
         batch_size: int = 64,
         output_dir: str = './model-checkpoints'
-        ):
+) -> training.Loop:
     """Run the training loop on the model
 
     Arguments:
@@ -248,8 +251,8 @@ def train_model(
             The path to the directory for the training checkpoints and
             trained model.
 
-    Return: tl.Serial
-        The trained model.
+    Return: training.Loop
+        The trax model training loop instance.
     """
     try:
         shutil.rmtree(output_dir)
@@ -293,11 +296,11 @@ def train_model(
     return training_loop
 
 
-def compute_accuracy(
+def compute_batch_accuracy(
         predictions: jax.Array,
         labels: jax.Array,
         padding_index: int
-        ) -> float:
+) -> float:
     """Compute the classification accuracy for a batch of predictions
 
     Arguments:
@@ -324,7 +327,7 @@ def test_model_accuracy(
         test_labels: list[list[int]],
         padding_index: int,
         model: tl.Serial
-        ) -> float:
+) -> float:
     """Compute the trained model's accuracy on the test dataset
 
     Arguments:
@@ -342,13 +345,17 @@ def test_model_accuracy(
     """
     # Processing the entire test dataset in a single batch
     batch = batch_generator(
-        inputs=test_inputs, labels=test_labels,
-        batch_size=len(test_inputs), padding_index=padding_index,
-        cycle=False, shuffle=False)
+        inputs=test_inputs,
+        labels=test_labels,
+        batch_size=len(test_inputs),
+        padding_index=padding_index,
+        cycle=False,
+        shuffle=False
+    )
 
     (inputs, labels) = next(batch)
     predictions = model(inputs)
-    accuracy = compute_accuracy(predictions, labels, padding_index)
+    accuracy = compute_batch_accuracy(predictions, labels, padding_index)
     return accuracy
 
 
@@ -357,7 +364,7 @@ def predict_tags(
         model: tl.Serial,
         token_to_idx: dict[str, int],
         idx_to_tag: dict[int, str]
-        ) -> list[tuple[str, str]]:
+) -> list[tuple[str, str]]:
     """Predict the named entity tags for a given text sentence
 
     Arguments:

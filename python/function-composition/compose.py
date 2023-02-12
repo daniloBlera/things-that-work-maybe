@@ -21,6 +21,7 @@ def compose(*funcs):
     return reduce(lambda f, g: lambda *args, **kwargs: f(g(*args, **kwargs)),
                   funcs)
 
+
 comp = compose(int, float, str, float, int)
 print(f'{comp(1) == 1 = }')
 
@@ -30,7 +31,7 @@ def flatten(xss):
     """Flatten an arbitrarily nested list
 
     Implementation based on the `flatten` function from the
-    chapter 4 of the book On Lisp.
+    chapter 4 of the book "On Lisp".
     """
     def rec(x, acc):
         if not isinstance(x, list):
@@ -47,5 +48,5 @@ def flatten(xss):
 ## List-fying a pairwise generator because why not?
 pairwise_l = compose(list, pairwise)
 
-## Flatten list then count elements
+## Flatten nested list then count elements
 flatten_and_count = compose(Counter, flatten)
