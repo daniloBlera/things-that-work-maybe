@@ -260,16 +260,26 @@ def train_model(
         pass
 
     train_generator = inputs.add_loss_weights(
-        batch_generator(inputs=train_inputs, labels=train_labels,
-                        batch_size=batch_size, padding_index=padding_index,
-                        cycle=True, shuffle=True),
+        batch_generator(
+            inputs=train_inputs,
+            labels=train_labels,
+            batch_size=batch_size,
+            padding_index=padding_index,
+            cycle=True,
+            shuffle=True
+        ),
         id_to_mask=padding_index
     )
 
     eval_generator = inputs.add_loss_weights(
-        batch_generator(inputs=val_inputs, labels=val_labels,
-                        batch_size=batch_size, padding_index=padding_index,
-                        cycle=True, shuffle=True),
+        batch_generator(
+            inputs=val_inputs,
+            labels=val_labels,
+            batch_size=batch_size,
+            padding_index=padding_index,
+            cycle=True,
+            shuffle=True
+        ),
         id_to_mask=padding_index
     )
 

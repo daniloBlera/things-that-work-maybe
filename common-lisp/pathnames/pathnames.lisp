@@ -48,9 +48,9 @@ Example:
   (file-exists-p \"path/to/missing-file\")  => NIL"
   (let ((probe (probe-file spec)))
     (and probe
-         (and (pathname-name spec)
-              (pathname-name probe)
-              probe))))
+         (pathname-name spec)
+         (pathname-name probe)
+         probe)))
 
 (defun directory-exists-p (spec)
   "Check if a spec is an existing directory.

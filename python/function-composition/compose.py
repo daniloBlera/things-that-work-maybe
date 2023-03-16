@@ -45,8 +45,8 @@ def flatten(xss):
     return rec(xss, [])
 
 
-## List-fying a pairwise generator because why not?
+# List-fying a pairwise generator because why not?
 pairwise_l = compose(list, pairwise)
 
-## Flatten nested list then count elements
+# Flatten nested list then count elements
 flatten_and_count = compose(Counter, flatten)
