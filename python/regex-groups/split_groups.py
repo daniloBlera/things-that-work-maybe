@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Parsing a string with regex for its groups
-
-This is a good example of something pretty neat
-"""
+"""Parsing a string with regex for its groups"""
 import re
 
 

@@ -125,12 +125,12 @@ def get_vocab(tokenized_samples: list[list[str]]) -> set[str]:
     return {token for sent in tokenized_samples for token in sent}
 
 
-def get_token_index_maps(vocab: set[str],
-                         unknown_token: str = UNKNOWN_TOKEN,
-                         padding_token: str = PADDING_TOKEN,
-                         end_of_text_token: str = END_OF_TEXT_TOKEN
-                         ) -> tuple[dict[str, int],
-                                    dict[int, str]]:
+def get_token_index_maps(
+        vocab: set[str],
+        unknown_token: str = UNKNOWN_TOKEN,
+        padding_token: str = PADDING_TOKEN,
+        end_of_text_token: str = END_OF_TEXT_TOKEN
+) -> tuple[dict[str, int], dict[int, str]]:
     """Get the token and index mapping dicts"""
     tokens = [unknown_token, padding_token, end_of_text_token] + sorted(vocab)
     idx2token = {idx: token for (idx, token) in enumerate(tokens)}
@@ -159,9 +159,10 @@ def tweet_to_tensor(tweet: str, token2idx: dict[str, int]) -> list[int]:
     return tensor
 
 
-def tensor_to_tokens(tensor: list[int] | jax.Array,
-                     idx2token: dict[int, str]
-                     ) -> list[str]:
+def tensor_to_tokens(
+        tensor: list[int] | jax.Array,
+        idx2token: dict[int, str]
+) -> list[str]:
     """Return a list of tokens relative to the list of indexes.
 
     Arguments:
@@ -190,17 +191,15 @@ def pad_right(iterable: list[int], length: int, pad_element: int) -> list[int]:
 
 
 # TODO: Move some of this docs to the more specific below
-def batch_generator(data_pos: list[str],
-                    data_neg: list[str],
-                    batch_size: int,
-                    token2idx: dict[str, int],
-                    cycle: bool = True,
-                    shuffle: bool = True,
-                    padding_token: str = PADDING_TOKEN
-                    ) -> typing.Generator[
-                            tuple[jax.Array, jax.Array, jax.Array],
-                            None,
-                            None]:
+def batch_generator(
+        data_pos: list[str],
+        data_neg: list[str],
+        batch_size: int,
+        token2idx: dict[str, int],
+        cycle: bool = True,
+        shuffle: bool = True,
+        padding_token: str = PADDING_TOKEN
+) -> typing.Iterator[tuple[jax.Array, jax.Array, jax.Array]]:
     """The generic batch generator function used for training and testing.
 
     Yield (index-encoded) inputs, labels and sample weights batches with equal
@@ -276,42 +275,50 @@ number ({batch_size=})'''
             break
 
 
-def train_batch_generator(data_pos: list[str],
-                          data_neg: list[str],
-                          batch_size: int,
-                          token2idx: dict[str, int],
-                          cycle: bool = True,
-                          shuffle: bool = True) -> typing.Generator:
+def train_batch_generator(
+        data_pos: list[str],
+        data_neg: list[str],
+        batch_size: int,
+        token2idx: dict[str, int],
+        cycle: bool = True,
+        shuffle: bool = True
+) -> typing.Iterator:
     """The training batch generator function for the training procedure"""
     return batch_generator(
             data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
 
 
-def val_batch_generator(data_pos: list[str],
-                        data_neg: list[str],
-                        batch_size: int,
-                        token2idx: dict[str, int],
-                        cycle: bool = True,
-                        shuffle: bool = True) -> typing.Generator:
+def val_batch_generator(
+        data_pos: list[str],
+        data_neg: list[str],
+        batch_size: int,
+        token2idx: dict[str, int],
+        cycle: bool = True,
+        shuffle: bool = True
+) -> typing.Iterator:
     """The validation batch generator function for the training procedure"""
     return batch_generator(
         data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
 
 
-def test_batch_generator(data_pos: list[str],
-                         data_neg: list[str],
-                         batch_size: int,
-                         token2idx: dict[str, int],
-                         cycle: bool = False,
-                         shuffle: bool = True) -> typing.Generator:
+def test_batch_generator(
+        data_pos: list[str],
+        data_neg: list[str],
+        batch_size: int,
+        token2idx: dict[str, int],
+        cycle: bool = False,
+        shuffle: bool = True
+) -> typing.Iterator:
     """The testing batch generator function for the training procedure"""
     return batch_generator(
         data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
 
 
-def create_classifier(vocab_size: int,
-                      embedding_dim: int = 256,
-                      output_dim: int = 2) -> tl.Serial:
+def create_classifier(
+        vocab_size: int,
+        embedding_dim: int = 256,
+        output_dim: int = 2
+) -> tl.Serial:
     """Return a sentiment classifier model
 
     Arguments:
@@ -335,12 +342,13 @@ def create_classifier(vocab_size: int,
     return model
 
 
-def get_train_task(positive_samples: list[str],
-                   negative_samples: list[str],
-                   token2idx: dict[str, int],
-                   cycle: bool = True,
-                   batch_size: int = 16
-                   ) -> tt.TrainTask:
+def get_train_task(
+        positive_samples: list[str],
+        negative_samples: list[str],
+        token2idx: dict[str, int],
+        cycle: bool = True,
+        batch_size: int = 16
+) -> tt.TrainTask:
     """Create a training task
 
     Arguments:
@@ -377,12 +385,13 @@ def get_train_task(positive_samples: list[str],
     return task
 
 
-def get_eval_task(positive_samples: list[str],
-                  negative_samples: list[str],
-                  token2idx: dict[str, int],
-                  cycle: bool = True,
-                  batch_size: int = 16
-                  ) -> tt.EvalTask:
+def get_eval_task(
+        positive_samples: list[str],
+        negative_samples: list[str],
+        token2idx: dict[str, int],
+        cycle: bool = True,
+        batch_size: int = 16
+) -> tt.EvalTask:
     """Create a training validation task
 
     Arguments:
@@ -418,11 +427,12 @@ def get_eval_task(positive_samples: list[str],
     return task
 
 
-def get_test_task(positive_samples: list[str],
-                  negative_samples: list[str],
-                  token2idx: dict[str, int],
-                  batch_size: int = 16
-                  ) -> tt.EvalTask:
+def get_test_task(
+        positive_samples: list[str],
+        negative_samples: list[str],
+        token2idx: dict[str, int],
+        batch_size: int = 16
+) -> tt.EvalTask:
     """Create a test evaluation task
 
     Arguments:
@@ -456,12 +466,13 @@ def get_test_task(positive_samples: list[str],
     return task
 
 
-def train_model(classifier: tl.Serial,
-                train_task: tt.TrainTask,
-                eval_task: tt.EvalTask,
-                max_steps: int,
-                output_dir: str = './model-checkpoints'
-                ) -> tt.Loop:
+def train_model(
+        classifier: tl.Serial,
+        train_task: tt.TrainTask,
+        eval_task: tt.EvalTask,
+        max_steps: int,
+        output_dir: str = './model-checkpoints'
+) -> tt.Loop:
     """Run and return a training loop
 
     Arguments
@@ -492,10 +503,11 @@ def train_model(classifier: tl.Serial,
 
 
 # TODO: make the symbol naming more consistent with the logic
-def compute_accuracy(predictions: jax.Array,
-                     labels: jax.Array,
-                     sample_weights: jax.Array
-                     ) -> tuple[float, int, int]:
+def compute_accuracy(
+        predictions: jax.Array,
+        labels: jax.Array,
+        sample_weights: jax.Array
+) -> tuple[float, int, int]:
     """Compute the accuracy of predictions
 
     Parameters
@@ -521,14 +533,15 @@ def compute_accuracy(predictions: jax.Array,
     return (accuracy, weighted_num_correct, batch_size)
 
 
-def test_model(batch_generator: typing.Generator,
-               model: tl.Serial,
-               compute_accuracy: typing.Callable = compute_accuracy
-               ) -> float:
+def test_model(
+        batch_generator: typing.Iterator,
+        model: tl.Serial,
+        compute_accuracy: typing.Callable = compute_accuracy
+) -> float:
     """Compute the accuracy of the trained model on the test dataset
 
     Arguments:
-        batch_generator: typing.Generator
+        batch_generator: typing.Iterator
             A test sample generator.
         model: trax.layers.Serial
             A trained trax model.
@@ -555,10 +568,11 @@ def test_model(batch_generator: typing.Generator,
     return total_num_correct / total_num_predictions
 
 
-def predict_sentiment(tweet: str,
-                      token2idx: dict[str, int],
-                      model: tl.Serial,
-                      ) -> typing.Literal['positive', 'negative']:
+def predict_sentiment(
+        tweet: str,
+        token2idx: dict[str, int],
+        model: tl.Serial,
+) -> typing.Literal['positive', 'negative']:
     """Predict the sentiment on a text sentence
 
     Arguments:

@@ -2,7 +2,7 @@
 import random
 import shutil
 from pathlib import Path
-from typing import Callable, Generator, TypeVar
+from typing import Callable, Iterator, TypeVar
 
 import jax
 import jax.numpy as jnp
@@ -128,7 +128,7 @@ def batch_generator(
         padding_index: int,
         cycle: bool = True,
         shuffle: bool = True
-) -> Generator[tuple[jax.Array, jax.Array], None, None]:
+) -> Iterator[tuple[jax.Array, jax.Array]]:
     """A generic batch generator used for training, validation and testing.
 
     Arguments:
