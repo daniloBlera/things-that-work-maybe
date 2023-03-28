@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Wrap functions with a timestamp logger"""
 from datetime import datetime
 
 
