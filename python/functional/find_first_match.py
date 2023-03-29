@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Find the first element of iterable that passes a predicate"""
 from more_itertools import first
 
 
@@ -7,7 +8,7 @@ __SENTINEL = object()
 
 
 def find_if(predicate, iterable, default=__SENTINEL, /):
-    """Return the first element where `predicate(item)` is True
+    """Return the first element where `predicate(item)` is "truthy"
 
     Usage examples:
         # find the first even number

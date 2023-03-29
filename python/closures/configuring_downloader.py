@@ -8,9 +8,17 @@ def make_downloader(download_path: str) -> Callable[[str], None]:
     """Return a download function configured with a download path"""
     def dl_func(package: str) -> None:
         nltk.download(package, download_dir=download_path)
-        if download_path not in nltk.data.path:
+
+        if download_path in nltk.data.path:
+            if nltk.data.path[0] != download_path:
+                print(f'* Making "{download_path}" the first entry from nltk\'s path')
+                nltk.data.path.remove(download_path)
+                nltk.data.path.insert(0, download_path)
+        else:
+            print(f'* Inserting "{download_path}" into nltk\'s path')
             nltk.data.path.insert(0, download_path)
 
+    print(f'* Configuring download function to "{download_path}"')
     return dl_func
 
 
