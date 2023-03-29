@@ -14,9 +14,8 @@ def tee(func):
 
 
 # %% composition implementation
-def compose(f, g, *rest, left_to_right=False):
+def compose(f, g, /, *rest, left_to_right=False):
     funcs = [f, g, *rest]
-
     return reduce(lambda f, g: lambda *args, **kwargs: f(g(*args, **kwargs)),
                   funcs if not left_to_right else reversed(funcs))
 
