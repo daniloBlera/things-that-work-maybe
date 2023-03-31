@@ -3,7 +3,7 @@
 from functools import reduce
 
 
-# %% debugging function order
+# %% to display the function application order
 def tee(func):
     """Print the input args and output of `func`, kinda like `tee`"""
     def wrapper(*args, **kwargs):
@@ -15,6 +15,13 @@ def tee(func):
 
 # %% composition implementation
 def compose(f, g, /, *rest, left_to_right=False):
+    """Compose two or more functions
+
+    By default, this returns a function composition that applies
+    functions from the right to the left. Optionally, if `left_to_right` is
+    set to `True`, the composition applies function from left to right like
+    in a pipeline
+    """
     funcs = [f, g, *rest]
     return reduce(lambda f, g: lambda *args, **kwargs: f(g(*args, **kwargs)),
                   funcs if not left_to_right else reversed(funcs))

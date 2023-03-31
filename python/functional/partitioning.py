@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Group elements from iterable in two groups, according to a predicate
+"""Group elements from an iterable in two groups, according to a predicate
 
-For learning purposes only. Use `more_itertools.partition` instead
+This is for learning purposes only. Use `more_itertools.partition` instead
 """
 from functools import reduce
 
