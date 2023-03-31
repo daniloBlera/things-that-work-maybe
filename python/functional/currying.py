@@ -18,16 +18,16 @@ from inspect import signature as sig
 # %% our function wrapper
 class Curry():
     def __init__(self, func):
-        self.func = partial(func)
+        self.__func = func
 
     def __repr__(self):
-        return f'f{sig(self.func)}'
+        return f'f{sig(self.__func)}'
 
     def __str__(self):
         return self.__repr__()
 
     def __call__(self, *args):
-        output = partial(self.func, *args)
+        output = partial(self.__func, *args)
 
         if len(sig(output).parameters) <= 0:
             return output()
