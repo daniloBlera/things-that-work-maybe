@@ -9,28 +9,22 @@ def make_downloader(download_path: str) -> Callable[[str], None]:
     def dl_func(package: str) -> None:
         nltk.download(package, download_dir=download_path)
 
-        if download_path in nltk.data.path:
-            if nltk.data.path[0] != download_path:
-                print(f'* Making "{download_path}" the first entry from nltk\'s path')
-                nltk.data.path.remove(download_path)
-                nltk.data.path.insert(0, download_path)
-        else:
-            print(f'* Inserting "{download_path}" into nltk\'s path')
-            nltk.data.path.insert(0, download_path)
-
     print(f'* Configuring download function to "{download_path}"')
+    if download_path not in nltk.data.path:
+        print(f'** Inserting "{download_path}" to nltk\'s path')
+        nltk.data.path.insert(0, download_path)
+
     return dl_func
 
 
-# assign to `download` a download function configured to
-# use './nltk-resources' as the download directory
-download = make_downloader('./nltk-resources')
+# configure two downloaders for different directory because REASONS!
+downloader1 = make_downloader('./nltk-resources1')
+downloader2 = make_downloader('./nltk-resources2')
 
-# download the 'punkt', 'twitter_samples', and 'stopwords'
-# packages with the previously configured download function
-download('punkt')
-download('twitter_samples')
-download('stopwords')
+# downloading packages into different directories
+downloader1('punkt')
+downloader2('twitter_samples')
+downloader1('stopwords')
 
 # using nltk.word_tokenize to check if the "punkt" package is found
 sentence = 'This is an example of a text sentence.'

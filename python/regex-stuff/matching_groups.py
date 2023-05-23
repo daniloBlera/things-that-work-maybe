@@ -21,7 +21,7 @@ pattern = re.compile(r'(\w+)\t(\w+) ([0-9 ;]+)\t(.+)')
 
 # Display the groups if the string is fully matched
 if (result := pattern.fullmatch(line)):
-    print(f'Line: {repr(line)}')
-    print(f'Groups: {result.groups()}')
+    print(f'* Line: {repr(line)}')
+    print(f'* Groups: {result.groups()}')
 else:
     print('Entity matching failed')

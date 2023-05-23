@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exercising bad ideas for the sake of learning"""
+# %% imports
 from functools import reduce
 
 
@@ -27,16 +28,14 @@ def compose(f, g, /, *rest, left_to_right=False):
                   funcs if not left_to_right else reversed(funcs))
 
 
+# %% run tests
 if __name__ == '__main__':
-    # %% tee-wrapped functions
     intt = tee(int)
     floatt = tee(float)
 
-    # %% testing compose(f1, f2, f3)(x) == f1(f2(f3(x)))
     pipeline = compose(intt, floatt)
     pipeline(1.9)
 
-    # %% testing compose(f1, f2, f3)(x) == f3(f2(f1(x)))
     pipeline = compose(intt, floatt, left_to_right=True)
     pipeline(1.9)
 

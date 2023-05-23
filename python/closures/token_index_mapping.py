@@ -22,19 +22,20 @@ def get_vocab(corpus: str) -> list[str]:
 def get_token_index_maps(
         vocab: list[str]
 ) -> tuple[dict[str, int], dict[int, str]]:
-    """Get the token-index and index-token dictionaries from the vocab
+    """Get the token->index and index->token dictionaries from the vocab
 
     Given a list of unique tokens, return two dictionaries. The first one
     maps tokens to integer indexes while the second does the inverse, mapping
-    integers to tokens.
+    integers to tokens. These mappings are used to transform back and forth
+    lists of string tokens to lists of integers.
 
     Arguments:
         vocab: list[str]
             A list of unique words.
 
     Return: (dict[str, int], dict[int, str])
-        A tuple containing two dictionaries, the first with token to integer
-        index while the second is the opposite.
+        A tuple containing two dictionaries, the first maps tokens to integer
+        indexes while the second does the opposite.
     """
     idx2token = dict(enumerate(['<PAD>', '<UNK>'] + vocab))
     token2idx = {token: idx for (idx, token) in idx2token.items()}
