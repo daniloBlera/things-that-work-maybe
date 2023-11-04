@@ -1,7 +1,7 @@
+# Python stuff
 __pycache__/
 *.py[cod]
 .venv/
-.venv
 .spyderproject
 .spyproject
 .mypy_cache/
