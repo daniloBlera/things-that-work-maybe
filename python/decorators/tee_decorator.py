@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mimick the behaviour of `tee` when calling functions """
+"""Mimick the behaviour of `tee` when calling functions"""
 from typing import Sequence, TypeVar
 
 
