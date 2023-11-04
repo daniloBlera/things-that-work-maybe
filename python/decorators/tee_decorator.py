@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Mimick the behaviour of `tee` when calling functions"""
+"""Mimick the behaviour of `tee` when calling functions """
+from typing import Sequence, TypeVar
 
 
 def tee(func):
@@ -12,11 +13,15 @@ def tee(func):
     return wrapper
 
 
+# our generic type `T` until `mypy` adds support for PEP695
+T = TypeVar('T')
+
 @tee
-def butlast(iterable):
+def butlast(iterable: Sequence[T]) -> Sequence[T]:
     return iterable[:-1]
 
 
 trigram = [1, 2, 3]
 bigram = butlast(trigram)
 unigram = butlast(bigram)
+empty = butlast([1])

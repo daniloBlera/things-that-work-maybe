@@ -2,10 +2,11 @@
 """Exercising bad ideas for the sake of learning"""
 # %% imports
 from functools import reduce
+from typing import Callable
 
 
 # %% to display the function application order
-def tee(func):
+def tee(func: Callable) -> Callable:
     """Print the input args and output of `func`, kinda like `tee`"""
     def wrapper(*args, **kwargs):
         output = func(*args, **kwargs)
@@ -15,15 +16,16 @@ def tee(func):
 
 
 # %% composition implementation
-def compose(f, g, /, *rest, left_to_right=False):
+def compose(
+    f: Callable, g: Callable, /, *rest: Callable, left_to_right: bool = False
+) -> Callable:
     """Compose two or more functions
 
-    By default, this returns a function composition that applies
-    functions from the right to the left. Optionally, if `left_to_right` is
-    set to `True`, the composition applies function from left to right like
-    in a pipeline
+    By default, return a function composition that applies from right to left.
+    Optionally, if `left_to_right` is `True`, the composition applies the
+    functions from left to right like in a pipeline.
     """
-    funcs = [f, g, *rest]
+    funcs: list[Callable] = [f, g, *rest]
     return reduce(lambda f, g: lambda *args, **kwargs: f(g(*args, **kwargs)),
                   funcs if not left_to_right else reversed(funcs))
 
