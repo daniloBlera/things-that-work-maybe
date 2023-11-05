@@ -19,8 +19,8 @@ def func2(var=var) -> None:
 # function definitions
 var = 2
 
-# while `func1` uses the current value of `var`, `func2` uses the value at the
-# time of the function definition
+# while `func1` uses the current value of `var`, `func2` uses the value when the
+# function was evaluated
 func1()  # prints 'var=2' to stdout
 func2()  # prints 'var=1' to stdout
 
