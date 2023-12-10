@@ -13,15 +13,15 @@ import re
 #       <text> ::= '<str>'
 #
 # For example
-line = 'T2\tHabitat 77 98;119 129;144 151\tsurface microbiota of Gorgonzola cheeses'
+line = "T2\tHabitat 77 98;119 129;144 151\tsurface microbiota of Gorgonzola cheeses"
 
 # Specifying the above capture groups with
 # parenthesis-delimited expressions
-pattern = re.compile(r'(\w+)\t(\w+) ([0-9 ;]+)\t(.+)')
+pattern = re.compile(r"(\w+)\t(\w+) ([0-9 ;]+)\t(.+)")
 
 # Display the groups if the string is fully matched
-if (result := pattern.fullmatch(line)):
-    print(f'* Line: {repr(line)}')
-    print(f'* Groups: {result.groups()}')
+if result := pattern.fullmatch(line):
+    print(f"* Line: {repr(line)}")
+    print(f"* Groups: {result.groups()}")
 else:
-    print('Entity matching failed')
+    print("Entity matching failed")

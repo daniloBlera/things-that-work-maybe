@@ -15,6 +15,7 @@ import tqdm
 import trax
 import trax.layers as tl
 import trax.supervised.training as tt
+from collections.abc import Iterator
 
 
 NLTK_DIR = 'nltk-resources'
@@ -199,7 +200,7 @@ def batch_generator(
         cycle: bool = True,
         shuffle: bool = True,
         padding_token: str = PADDING_TOKEN
-) -> typing.Iterator[tuple[jax.Array, jax.Array, jax.Array]]:
+) -> Iterator[tuple[jax.Array, jax.Array, jax.Array]]:
     """The generic batch generator function used for training and testing.
 
     Yield (index-encoded) inputs, labels and sample weights batches with equal
@@ -282,7 +283,7 @@ def train_batch_generator(
         token2idx: dict[str, int],
         cycle: bool = True,
         shuffle: bool = True
-) -> typing.Iterator:
+) -> Iterator:
     """The training batch generator function for the training procedure"""
     return batch_generator(
             data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
@@ -295,7 +296,7 @@ def val_batch_generator(
         token2idx: dict[str, int],
         cycle: bool = True,
         shuffle: bool = True
-) -> typing.Iterator:
+) -> Iterator:
     """The validation batch generator function for the training procedure"""
     return batch_generator(
         data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
@@ -308,7 +309,7 @@ def test_batch_generator(
         token2idx: dict[str, int],
         cycle: bool = False,
         shuffle: bool = True
-) -> typing.Iterator:
+) -> Iterator:
     """The testing batch generator function for the training procedure"""
     return batch_generator(
         data_pos, data_neg, batch_size, token2idx, cycle, shuffle)
@@ -534,14 +535,14 @@ def compute_accuracy(
 
 
 def test_model(
-        batch_generator: typing.Iterator,
+        batch_generator: Iterator,
         model: tl.Serial,
         compute_accuracy: typing.Callable = compute_accuracy
 ) -> float:
     """Compute the accuracy of the trained model on the test dataset
 
     Arguments:
-        batch_generator: typing.Iterator
+        batch_generator: Iterator
             A test sample generator.
         model: trax.layers.Serial
             A trained trax model.

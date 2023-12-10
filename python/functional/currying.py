@@ -15,7 +15,6 @@ from functools import partial
 from inspect import signature as sig
 
 
-# %% our function wrapper
 class Curry():
     def __init__(self, func):
         self.__func = func
@@ -35,12 +34,10 @@ class Curry():
             return Curry(output)
 
 
-# %% the function to be curried
 def foonction(x: int, y: int, z: int) -> int:
     return x + y + z
 
 
-# %% testing argument consumption
 if __name__ == '__main__':
     func = Curry(foonction)
     print(func)  # => f(x: int, y: int, z: int) -> int

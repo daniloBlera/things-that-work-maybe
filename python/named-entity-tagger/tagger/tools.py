@@ -2,7 +2,8 @@
 import random
 import shutil
 from pathlib import Path
-from typing import Callable, Iterator, TypeVar
+from typing import TypeVar
+from collections.abc import Callable, Iterator
 
 import jax
 import jax.numpy as jnp

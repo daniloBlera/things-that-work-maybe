@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Exercising bad ideas for the sake of learning"""
-# %% imports
 from functools import reduce
 from typing import Callable
 
 
-# %% to display the function application order
 def tee(func: Callable) -> Callable:
     """Print the input args and output of `func`, kinda like `tee`"""
     def wrapper(*args, **kwargs):
@@ -15,7 +13,6 @@ def tee(func: Callable) -> Callable:
     return wrapper
 
 
-# %% composition implementation
 def compose(
     f: Callable, g: Callable, /, *rest: Callable, left_to_right: bool = False
 ) -> Callable:
@@ -30,7 +27,9 @@ def compose(
                   funcs if not left_to_right else reversed(funcs))
 
 
-# %% run tests
+def negate(x):
+    return -x
+
 if __name__ == '__main__':
     intt = tee(int)
     floatt = tee(float)
@@ -41,13 +40,7 @@ if __name__ == '__main__':
     pipeline = compose(intt, floatt, left_to_right=True)
     pipeline(1.9)
 
-
-# %% learn you a python for great good
-def negate(x):
-    return -x
-
-
-if __name__ == '__main__':
+    # learn you a python for great good (maybe?)
     # shorthand to `list(map(fn, *args))` for printing
     mapl = compose(list, map)
 

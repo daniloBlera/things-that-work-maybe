@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Mimick the behaviour of `tee` when calling functions"""
-from typing import Sequence, TypeVar
+from collections.abc import Sequence
+from typing import TypeVar
 
 
 def tee(func):
     """Print the output of func to STDOUT then return it"""
+
     def wrapper(*args, **kwargs):
         output = func(*args, **kwargs)
         print(output)
@@ -14,7 +16,8 @@ def tee(func):
 
 
 # our generic type `T` until `mypy` adds support for PEP695
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 @tee
 def butlast(iterable: Sequence[T]) -> Sequence[T]:
