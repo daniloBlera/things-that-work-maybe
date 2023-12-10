@@ -1,9 +1,17 @@
-# Python stuff
+# python stuff
 __pycache__/
 *.py[cod]
 .venv/
+
+# local editor configs
 .spyderproject
 .spyproject
+.vscode/
+
+# mypy and pytest
 .mypy_cache/
+pytest_cache/
+
+# commonly used resources
 nltk-resources/
 model-checkpoints/
