@@ -7,7 +7,6 @@ returns "unknown" values for out of vocabulary keys.
 from collections import UserDict
 
 
-# %% the definition
 class dyct(UserDict):
     def __init__(self, default_factory=None, /, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,15 +23,15 @@ class dyct(UserDict):
             return self.default_factory()
 
 
-# %% test missing key with factory
+# missing key with factory
 xs = dyct(lambda: -1)
 print(f'{xs[1]=}')  # => 'xs[-1]=-1'
 
-# %% test missing key plus dict args
+# missing key plus dict args
 xs = dyct(lambda: -1, {1: 1, 2: 2})
 print(f'{xs=}')      # => 'xs={1: 1, 2: 2}'
 print(f'{xs[-1]=}')  # => 'xs[-1]=-1'
 
-# %% test missing key without factory
+# missing key without factory
 xs = dyct()
 print(f'{xs[1]=}')   # raises KeyError
